@@ -130,7 +130,9 @@ const Hero = () => {
           </a>
           <a
             href={portfolio.resumeUrl}
-            download
+            download="Divyanshu_Rauniyar_Resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl border border-border text-foreground font-semibold transition-all duration-300 hover:bg-secondary/60 hover:border-primary/30 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:shadow-md w-full sm:w-auto"
           >
             <Download size={18} />

@@ -1,10 +1,8 @@
-import resumePdf from "@/assets/Div.pdf";
-
 export const portfolio = {
   name: "DivYanshu Rauniyar",
   role: "Frontend Developer",
   tagline: "I build clean, scalable web applications with modern technologies.",
-  resumeUrl: resumePdf,
+  resumeUrl: "/Div.pdf",
   githubUrl: "https://github.com/div-cyber",
 
   socials: {
