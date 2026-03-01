@@ -7,7 +7,7 @@ export const portfolio = {
 
   socials: {
     github: "https://github.com/div-cyber",
-    linkedin: "https://www.linkedin.com/notifications/?filter=all",
+    linkedin: "https://www.linkedin.com/in/div-yanshu-505839323/",
     x: "https://x.com/div_yanshu022",
     instagram: "https://www.instagram.com/div_yanshu22?igsh=dmZjOHBkbXRpNjhk",
     facebook: "https://www.facebook.com/share/1AHg6B3ah3/",

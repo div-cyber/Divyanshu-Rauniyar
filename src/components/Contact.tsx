@@ -30,21 +30,78 @@ const Contact = () => {
           </p>
         </div>
 
-        {/* Social cards — responsive grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 max-w-2xl mx-auto mb-12 sm:mb-16">
-          {socialLinks.map(({ icon: Icon, href, label, hoverColor }) => (
-            <a
-              key={label}
-              href={href}
-              target={label === "Email" ? undefined : "_blank"}
-              rel="noopener noreferrer"
-              aria-label={label}
-              className={`group glass-card-hover glow-border p-4 sm:p-5 flex flex-col items-center gap-2 sm:gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 active:shadow-md ${hoverColor}`}
-            >
-              <Icon size={22} className="text-muted-foreground transition-colors duration-300 group-hover:scale-110 transform" />
-              <span className="text-[11px] sm:text-xs font-medium text-muted-foreground transition-colors duration-300">{label}</span>
-            </a>
-          ))}
+        {/* Main Contact Container (Box) */}
+        <div className="max-w-5xl mx-auto glass-card glow-border overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border/30">
+            
+            {/* Left Side: Social Links (2 Columns) */}
+            <div className="p-6 sm:p-10 lg:col-span-2 bg-primary/[0.02]">
+              <h3 className="text-lg font-semibold mb-6 text-foreground/80">Social Profiles</h3>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                {socialLinks.map(({ icon: Icon, href, label, hoverColor }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target={label === "Email" ? undefined : "_blank"}
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={`group glass-card-hover glow-border p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 ${hoverColor}`}
+                  >
+                    <Icon size={20} className="text-muted-foreground transition-colors duration-300 group-hover:scale-110 transform" />
+                    <span className="text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors duration-300">{label}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Side: Contact Form */}
+            <div className="p-6 sm:p-10 lg:col-span-3">
+              <h3 className="text-lg font-semibold mb-6 text-foreground/80">Send a Message</h3>
+              <form 
+                onSubmit={(e) => e.preventDefault()}
+                className="space-y-5"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="text-sm font-medium text-muted-foreground ml-1">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      placeholder="Your name"
+                      className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium text-muted-foreground ml-1">Email</label>
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="your@email.com"
+                      className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="message" className="text-sm font-medium text-muted-foreground ml-1">Message</label>
+                  <textarea
+                    id="message"
+                    rows={4}
+                    placeholder="How can I help you?"
+                    className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 resize-none text-sm"
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 group transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  Send Message
+                  <Sparkles size={18} className="transition-transform group-hover:scale-110" />
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
