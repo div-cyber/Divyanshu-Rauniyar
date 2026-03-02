@@ -1,5 +1,8 @@
-import { Github, Linkedin, Twitter, Instagram, Facebook, Mail, Sparkles } from "lucide-react";
+import { useState, useRef } from "react";
+import { Github, Linkedin, Twitter, Instagram, Facebook, Mail, Sparkles, Send, Loader2 } from "lucide-react";
 import { portfolio } from "@/data/portfolio";
+import emailjs from '@emailjs/browser';
+import { toast } from "sonner";
 
 const socialLinks = [
   { icon: Github, href: portfolio.socials.github, label: "GitHub", hoverColor: "hover:text-foreground hover:border-foreground/40 hover:shadow-foreground/10" },
@@ -11,6 +14,48 @@ const socialLinks = [
 ];
 
 const Contact = () => {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Configured with your EmailJS credentials
+      await emailjs.sendForm(
+        'service_blp5bho',
+        'template_6e6aya5',
+        formRef.current!,
+        'yiG85Ekl8gi62z6vm' // PLEASE REPLACE THIS WITH YOUR ACTUAL PUBLIC KEY
+      );
+
+      toast.success("Message sent successfully! I'll get back to you soon.");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("EmailJS Error:", error);
+      toast.error("Failed to send message. Please try again or contact me directly via email.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contact" className="relative py-20 sm:py-28 gradient-bg section-glow">
       {/* Ambient glow */}
@@ -33,7 +78,7 @@ const Contact = () => {
         {/* Main Contact Container (Box) */}
         <div className="max-w-5xl mx-auto glass-card glow-border overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-border/30">
-            
+
             {/* Left Side: Social Links (2 Columns) */}
             <div className="p-6 sm:p-10 lg:col-span-2 bg-primary/[0.02]">
               <h3 className="text-lg font-semibold mb-6 text-foreground/80">Social Profiles</h3>
@@ -57,8 +102,9 @@ const Contact = () => {
             {/* Right Side: Contact Form */}
             <div className="p-6 sm:p-10 lg:col-span-3">
               <h3 className="text-lg font-semibold mb-6 text-foreground/80">Send a Message</h3>
-              <form 
-                onSubmit={(e) => e.preventDefault()}
+              <form
+                ref={formRef}
+                onSubmit={handleSubmit}
                 className="space-y-5"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -67,7 +113,11 @@ const Contact = () => {
                     <input
                       type="text"
                       id="name"
+                      name="user_name"
+                      value={formData.name}
+                      onChange={handleChange}
                       placeholder="Your name"
+                      required
                       className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 text-sm"
                     />
                   </div>
@@ -76,28 +126,46 @@ const Contact = () => {
                     <input
                       type="email"
                       id="email"
+                      name="user_email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="your@email.com"
+                      required
                       className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 text-sm"
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label htmlFor="message" className="text-sm font-medium text-muted-foreground ml-1">Message</label>
                   <textarea
                     id="message"
+                    name="message"
                     rows={4}
+                    value={formData.message}
+                    onChange={handleChange}
                     placeholder="How can I help you?"
+                    required
                     className="w-full px-4 py-3 rounded-xl bg-secondary/20 border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/50 outline-none transition-all duration-300 placeholder:text-muted-foreground/30 resize-none text-sm"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 group transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0"
+                  disabled={isSubmitting}
+                  className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 group transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Send Message
-                  <Sparkles size={18} className="transition-transform group-hover:scale-110" />
+                  {isSubmitting ? (
+                    <>
+                      Sending Message...
+                      <Loader2 size={18} className="animate-spin" />
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <Send size={18} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                    </>
+                  )}
                 </button>
               </form>
             </div>
