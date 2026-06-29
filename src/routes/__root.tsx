@@ -21,7 +21,7 @@ export function RootLayout() {
               className={`min-h-screen border-border/10 bg-background px-6 py-10 md:px-10 lg:px-14 ${isAdminPage ? "" : "border-l"}`}
             >
               <Outlet />
-              <SiteFooter />
+              {!isAdminPage && <SiteFooter />}
             </div>
           </main>
         </div>
