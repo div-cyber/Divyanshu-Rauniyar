@@ -1,119 +1,171 @@
-import { Download } from "lucide-react";
-import { useContentSection } from "../hooks/use-content-section";
+import {
+  Quote,
+  Code,
+  Brain,
+  Rocket,
+  BookOpen,
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  Mail,
+} from "lucide-react";
+import profileImage from "../asset/img1.png";
 
 export default function AboutPage() {
-  const { section } = useContentSection("about");
-  const title = section?.title ?? "A developer building thoughtful software from Nepal.";
-  const intro = section?.body ?? "Most of my work sits at the intersection of product engineering and applied AI. I enjoy turning fuzzy ideas into systems that ship, hold up under real users, and stay easy to evolve.";
-
-  const timeline = [
-    { year: "2026", title: "Founded BLACKBYTE", desc: "Started an engineering studio building thoughtful software and AI products from Nepal." },
-    { year: "2025", title: "Full-time on AI products", desc: "Shipped multiple LLM-powered tools, internal evals, and developer experiences." },
-    { year: "2024", title: "Full-stack engineering", desc: "Led product engineering across web, mobile, and infrastructure for early-stage startups." },
-    { year: "2022", title: "Began teaching", desc: "Started writing and mentoring developers — the practice that taught me the most." },
-    { year: "2020", title: "First production app", desc: "Shipped my first product used by real users. Got hooked on the craft." },
-  ];
-
-  const stack = {
-    Languages: ["TypeScript", "Python", "Go", "Rust", "SQL"],
-    Frontend: ["React", "Next.js", "Tailwind CSS", "shadcn/ui", "Framer Motion"],
-    Backend: ["Node.js", "FastAPI", "Postgres", "Prisma", "Redis", "tRPC"],
-    AI: ["OpenAI", "Anthropic", "LangChain", "LlamaIndex", "Embeddings", "Evals"],
-    Infra: ["Vercel", "Cloudflare", "Docker", "Supabase", "GitHub Actions"],
-  };
-
-  const values = [
-    { title: "Taste over trend", desc: "Build what's right for the user, not what's loudest on the timeline." },
-    { title: "Ship calmly", desc: "Small, consistent steps beat heroic sprints. Boring is a feature." },
-    { title: "Document everything", desc: "If it's worth doing, it's worth a note. The second brain compounds." },
-    { title: "Teach what you learn", desc: "Writing turns vague intuition into durable knowledge." },
-  ];
-
   return (
-    <div className="prose-content fade-up px-5 py-20">
-      <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">About Me</p>
-      <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
-        {title}
-      </h1>
+    <div className="fade-up">
+      <div className="max-w-7xl mx-auto px-5 pt-5 pb-10 lg:pt-8 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-8">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">ABOUT ME</p>
+            <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
+              Hi, I’m Divyanshu
+            </h1>
+            <p className="mt-2 text-xl font-semibold italic text-red-500">Nice to meet you! 👋</p>
+            <div className="mt-6 w-16 h-0.5 bg-red-500"></div>
 
-      <div className="mt-10 space-y-5 text-[1.05rem] leading-[1.8] text-muted-foreground">
-        <p>
-          I'm <span className="text-foreground font-semibold">Divyanshu Rauniyar</span> — a full-stack developer, AI engineer, and entrepreneur. I founded <span className="text-foreground font-semibold">BLACKBYTE</span>, an engineering studio where we build thoughtful software and AI products for teams who care about craft.
-        </p>
-        <p>{intro}</p>
-        <p>
-          This site is my digital headquarters. Articles, projects, notes, AI experiments, and the occasional personal essay live here. I treat it like a long-running notebook — written for myself first, and shared in case it's useful to you.
-        </p>
-      </div>
+            <div className="mt-8 space-y-5 text-[1rem] leading-[1.75] text-muted-foreground">
+              <p className="text-foreground font-medium">
+                I’m a developer, builder, and someone who genuinely enjoys turning ideas into
+                reality.
+              </p>
+              <p>
+                I started coding because I was curious about how technology works, but over time
+                that curiosity became an obsession with creating things that solve real problems.
+                Whether it’s developing web applications, experimenting with AI, building IoT
+                projects, or exploring new technologies, I enjoy the process of learning, building,
+                and improving every day.
+              </p>
+              <p>
+                I’m currently working toward becoming an AI Engineer while strengthening my
+                full-stack development skills. Alongside that journey, I founded{" "}
+                <span className="text-foreground font-semibold">Black Byte</span>, where I build
+                software based on real-world needs and work on products that can make a meaningful
+                impact.
+              </p>
+              <p>
+                Outside of coding, you’ll probably find me reading books, watching anime, listening
+                to music, or discussing ambitious ideas with friends. I believe in continuous
+                learning and pushing my limits.
+              </p>
+            </div>
 
-      <div className="mt-10">
-        <a
-          href="/resume.pdf"
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-        >
-          <Download className="h-4 w-4" />
-          Download Resume
-        </a>
-      </div>
-
-      <Section title="Journey">
-        <ol className="relative mt-2 space-y-6 border-l border-border pl-6">
-          {timeline.map((t) => (
-            <li key={t.year} className="relative">
-              <span className="absolute -left-[29px] top-1.5 inline-block h-2.5 w-2.5 rounded-full bg-foreground ring-4 ring-background" />
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t.year}</div>
-              <div className="mt-1 text-base font-semibold text-foreground">{t.title}</div>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t.desc}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title="Tech I reach for">
-        <div className="mt-2 space-y-5">
-          {Object.entries(stack).map(([group, items]) => (
-            <div key={group}>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{group}</h3>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {items.map((i) => (
-                  <span key={i} className="inline-flex items-center rounded-md border border-border bg-secondary px-2.5 py-1 text-xs font-medium text-foreground">
-                    {i}
-                  </span>
-                ))}
+            {/* Feature Cards */}
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="rounded-2xl border border-border/50 bg-card p-5 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-red-50 flex items-center justify-center mb-3">
+                  <Code className="w-5 h-5 text-red-500" />
+                </div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Full-Stack Developer
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Building end-to-end web applications.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/50 bg-card p-5 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-purple-50 flex items-center justify-center mb-3">
+                  <Brain className="w-5 h-5 text-purple-500" />
+                </div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  AI & ML Enthusiast
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Exploring AI to build smarter solutions.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/50 bg-card p-5 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-emerald-50 flex items-center justify-center mb-3">
+                  <Rocket className="w-5 h-5 text-emerald-500" />
+                </div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Founder @ Black Byte
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Turning ideas into impactful products.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border/50 bg-card p-5 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-amber-50 flex items-center justify-center mb-3">
+                  <BookOpen className="w-5 h-5 text-amber-500" />
+                </div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Lifelong Learner
+                </h3>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Always curious, always improving.
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </Section>
 
-      <Section title="Values">
-        <div className="mt-2 grid gap-4 sm:grid-cols-2">
-          {values.map((v) => (
-            <div key={v.title} className="rounded-xl border border-border bg-card p-5">
-              <h3 className="text-base font-bold tracking-tight text-foreground">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.desc}</p>
+            {/* Quote */}
+            <div className="mt-8 rounded-2xl bg-muted/40 p-6 flex items-start gap-4">
+              <Quote className="w-8 h-8 text-red-500 flex-shrink-0 mt-1" />
+              <p className="text-sm text-muted-foreground">
+                My goal is to create technology that gives people more opportunities, helps others
+                pursue their dreams, and leaves a positive impact.
+              </p>
             </div>
-          ))}
+          </div>
+
+          {/* Right Column - Profile & Contact */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Profile Image */}
+            <div className="relative">
+              <div
+                className="absolute -top-6 -right-6 w-24 h-24 opacity-20"
+                style={{
+                  backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)",
+                  backgroundSize: "8px 8px",
+                }}
+              ></div>
+              <div className="absolute -bottom-4 -right-4 text-red-400 opacity-30">
+                <svg
+                  width="120"
+                  height="120"
+                  viewBox="0 0 120 120"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 100 Q60 40 100 100"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <img
+                src={profileImage}
+                alt="Divyanshu Rauniyar"
+                className="w-full rounded-2xl shadow-xl object-cover aspect-[4/5]"
+              />
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-foreground" />
+                <span>Nepal</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-4 h-4 text-foreground" />
+                <span>Aspiring Tech Enthusiast</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-4 h-4 text-foreground" />
+                <span>Founder, Black Byte</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-foreground" />
+                <span>yanshudiv22@gmail.com</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </Section>
-
-      <Section title="Beyond code">
-        <ul className="mt-2 space-y-3 text-[1rem] leading-relaxed text-muted-foreground">
-          <li><span className="text-foreground font-medium">Reading</span> — A Philosophy of Software Design, Shape Up, Working in Public.</li>
-          <li><span className="text-foreground font-medium">Watching</span> — Vinland Saga, Frieren, and the occasional studio Ghibli rewatch.</li>
-          <li><span className="text-foreground font-medium">Learning</span> — Distributed systems, Rust, and the business side of running a studio.</li>
-          <li><span className="text-foreground font-medium">Teaching</span> — Mentoring developers, writing essays, and running small workshops.</li>
-        </ul>
-      </Section>
+      </div>
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="mt-14">
-      <h2 className="text-2xl font-bold tracking-tight text-foreground">{title}</h2>
-      {children}
-    </section>
   );
 }

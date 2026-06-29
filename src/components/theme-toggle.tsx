@@ -16,7 +16,9 @@ export function ThemeToggle() {
     if (next === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
     root.style.colorScheme = next;
-    try { localStorage.setItem("theme", next); } catch {}
+    try {
+      localStorage.setItem("theme", next);
+    } catch {}
   }
 
   return (

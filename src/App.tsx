@@ -3,9 +3,11 @@ import { RootLayout } from "./routes/__root";
 import AboutPage from "./routes/about";
 import AdminPage from "./routes/admin";
 import BlogPage from "./routes/blog";
+import BlogPostPage from "./routes/blog-post";
 import ContactPage from "./routes/contact";
 import IndexPage from "./routes/index";
 import NotesPage from "./routes/notes";
+import NotePage from "./routes/note";
 import NowPage from "./routes/now";
 import ProjectsPage from "./routes/projects";
 import UsesPage from "./routes/uses";
@@ -37,8 +39,10 @@ export default function App() {
           <Route index element={<IndexPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="blog" element={<BlogPage />} />
+          <Route path="blog/:slug" element={<BlogPostPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="notes" element={<NotesPage />} />
+          <Route path="notes/:id" element={<NotePage />} />
           <Route path="now" element={<NowPage />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="uses" element={<UsesPage />} />

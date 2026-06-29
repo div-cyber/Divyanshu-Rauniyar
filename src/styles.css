@@ -192,3 +192,38 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Global loader styles */
+.loader-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background);
+  z-index: 9999;
+}
+.loader-exit { opacity: 0; transition: opacity 420ms ease; pointer-events: none; }
+.loader-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.loader-name {
+  font-size: 48px;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  color: var(--color-foreground);
+}
+.loader-cursor {
+  display: inline-block;
+  margin-left: 6px;
+  animation: blink 1s steps(2, start) infinite;
+}
+@keyframes blink { to { visibility: hidden; } }
+.loader-spinner { width: 48px; height: 48px; }
+.loader-ring { width: 48px; height: 48px; }
+.loader-ring-bg { stroke: color-mix(in oklab, var(--color-muted) 40%, transparent); }
+.loader-ring-fg { stroke: var(--color-primary); stroke-linecap: round; stroke-dasharray: 125; stroke-dashoffset: 90; transform-origin: 50% 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

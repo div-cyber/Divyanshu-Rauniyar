@@ -9,23 +9,26 @@ import { ArrowUpRight, Plus, LogOut, Settings, User, Trash2, Activity } from "lu
 import {
   BlogPost,
   ContentSection,
+  Message,
   defaultContent,
   deleteBlogPost,
   deleteContentSection,
   deleteNote,
   fetchBlogPosts,
   fetchContentSections,
+  fetchMessages,
   fetchNotes,
   fetchPageMetrics,
   getCurrentSession,
   onAuthStateChange,
-  signInWithMagicLink,
+  signInWithPassword,
   signOut,
   updateBlogPost,
   updateContentSection,
   updateNote,
   createBlogPost,
   createContentSections,
+  createMessage,
   createNote,
 } from "../lib/supabase";
 import { useGithubRepos } from "../hooks/use-github-repos";
@@ -34,7 +37,7 @@ type UserSession = {
   email: string;
 };
 
-type AdminTab = "dashboard" | "profile" | "about" | "blog" | "notes";
+type AdminTab = "dashboard" | "profile" | "blog" | "notes" | "messages";
 
 type Note = {
   id: number;
@@ -42,6 +45,14 @@ type Note = {
   body: string;
   created_at: string;
   updated_at: string;
+};
+
+type Message = {
+  id: number;
+  name: string;
+  email: string;
+  body: string;
+  created_at: string;
 };
 
 type PageMetric = {
@@ -54,9 +65,9 @@ type PageMetric = {
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "dashboard", label: "Dashboard" },
   { id: "profile", label: "Profile" },
-  { id: "about", label: "About Me" },
   { id: "blog", label: "Blog" },
   { id: "notes", label: "Notes" },
+  { id: "messages", label: "Messages" },
 ];
 
 function slugify(text: string) {
@@ -68,8 +79,8 @@ function slugify(text: string) {
 }
 
 export default function AdminPage() {
-  const [email, setEmail] = useState("");
-  const [authSent, setAuthSent] = useState(false);
+  const [email, setEmail] = useState("yanshudiv22@gmail.com");
+  const [password, setPassword] = useState("iwillnot_share2008");
   const [session, setSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
@@ -77,20 +88,28 @@ export default function AdminPage() {
   const [selectedSection, setSelectedSection] = useState<ContentSection | null>(null);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [metrics, setMetrics] = useState<PageMetric[]>([]);
-  const { repos: githubRepos, loading: githubLoading, error: githubError } = useGithubRepos("div-cyber", 100);
+  const {
+    repos: githubRepos,
+    loading: githubLoading,
+    error: githubError,
+  } = useGithubRepos("div-cyber", 100);
   const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [formState, setFormState] = useState({ title: "", body: "" });
-  const [profileState, setProfileState] = useState({ siteName: "", heroTitle: "", heroBody: "", sidebarAbout: "" });
-  const [aboutState, setAboutState] = useState({ title: "", body: "" });
+  const [profileState, setProfileState] = useState({
+    siteName: "",
+    heroTitle: "",
+    heroBody: "",
+    sidebarAbout: "",
+  });
   const [blogState, setBlogState] = useState({ title: "", slug: "", body: "", published: true });
   const [noteState, setNoteState] = useState({ title: "", body: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [signInError, setSignInError] = useState<string | null>(null);
 
-  const aboutTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const noteTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   function replaceTextareaSelection(
@@ -127,7 +146,9 @@ export default function AdminPage() {
     replaceTextareaSelection(textarea, value, setter, (selected) => {
       const content = selected || placeholder;
       const isWrapped = content.startsWith(wrapper) && content.endsWith(wrapper);
-      return isWrapped ? content.slice(wrapper.length, content.length - wrapper.length) : `${wrapper}${content}${wrapper}`;
+      return isWrapped
+        ? content.slice(wrapper.length, content.length - wrapper.length)
+        : `${wrapper}${content}${wrapper}`;
     });
   }
 
@@ -268,7 +289,13 @@ export default function AdminPage() {
   }, []);
 
   async function loadAllData() {
-    await Promise.all([loadSections(), loadBlogPosts(), loadNotes(), loadMetrics()]);
+    await Promise.all([
+      loadSections(),
+      loadBlogPosts(),
+      loadNotes(),
+      loadMessages(),
+      loadMetrics(),
+    ]);
   }
 
   async function loadSections() {
@@ -284,7 +311,6 @@ export default function AdminPage() {
 
     const siteNameSection = items.find((section) => section.type === "site_name");
     const homeSection = items.find((section) => section.type === "home");
-    const aboutSection = items.find((section) => section.type === "about");
 
     if (siteNameSection) {
       setProfileState((prev) => ({
@@ -297,11 +323,11 @@ export default function AdminPage() {
     }
 
     if (homeSection) {
-      setProfileState((prev) => ({ ...prev, heroTitle: homeSection.title, heroBody: homeSection.body }));
-    }
-
-    if (aboutSection) {
-      setAboutState({ title: aboutSection.title, body: aboutSection.body });
+      setProfileState((prev) => ({
+        ...prev,
+        heroTitle: homeSection.title,
+        heroBody: homeSection.body,
+      }));
     }
 
     if (!selectedSection && items.length > 0) {
@@ -332,6 +358,17 @@ export default function AdminPage() {
     setNotes(data ?? []);
   }
 
+  async function loadMessages() {
+    const { data, error } = await fetchMessages();
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setMessages(data ?? []);
+  }
+
   async function loadMetrics() {
     const { data, error } = await fetchPageMetrics();
 
@@ -348,14 +385,12 @@ export default function AdminPage() {
     setSignInError(null);
     setMessage(null);
 
-    const { error } = await signInWithMagicLink(email);
+    const { error } = await signInWithPassword(email, password);
 
     if (error) {
       setSignInError(error.message);
       return;
     }
-
-    setAuthSent(true);
   }
 
   async function handleSignOut() {
@@ -421,24 +456,6 @@ export default function AdminPage() {
     await loadAllData();
   }
 
-  async function handleSaveAbout() {
-    setSaving(true);
-    setMessage(null);
-
-    const aboutSection = sections.find((section) => section.type === "about");
-
-    if (aboutSection) {
-      await updateContentSection(aboutSection.id, {
-        title: aboutState.title,
-        body: aboutState.body,
-      });
-    }
-
-    setSaving(false);
-    setMessage("About Me content saved.");
-    await loadAllData();
-  }
-
   async function handleCreateSection(type: ContentSectionType) {
     setSaving(true);
     setMessage(null);
@@ -497,7 +514,12 @@ export default function AdminPage() {
 
   function handleBlogSelect(blog: BlogPost) {
     setSelectedBlog(blog);
-    setBlogState({ title: blog.title, slug: blog.slug, body: blog.body, published: blog.published });
+    setBlogState({
+      title: blog.title,
+      slug: blog.slug,
+      body: blog.body,
+      published: blog.published,
+    });
     setMessage(null);
   }
 
@@ -671,10 +693,12 @@ export default function AdminPage() {
     return (
       <div className="mx-auto max-w-2xl px-5 py-24">
         <div className="rounded-3xl border border-border bg-card p-10 text-center">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Admin sign in</p>
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Admin sign in
+          </p>
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight">Sign in to manage content</h1>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            Enter your email and Supabase will send a magic link. The admin route is protected after sign in.
+            Enter your email and password to sign in. The admin route is protected after sign in.
           </p>
           <form className="mt-8 space-y-4" onSubmit={handleSignIn}>
             <label className="block text-left text-sm font-semibold text-foreground">
@@ -688,21 +712,27 @@ export default function AdminPage() {
                 placeholder="you@example.com"
               />
             </label>
+            <label className="block text-left text-sm font-semibold text-foreground">
+              Password
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                type="password"
+                required
+                className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
+                placeholder="••••••••••••"
+              />
+            </label>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 type="submit"
                 className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90"
               >
-                Send magic link
+                Sign in
               </button>
             </div>
           </form>
-          {authSent ? (
-            <p className="mt-4 text-sm text-foreground">Magic link sent — check your inbox.</p>
-          ) : null}
-          {signInError ? (
-            <p className="mt-4 text-sm text-destructive">{signInError}</p>
-          ) : null}
+          {signInError ? <p className="mt-4 text-sm text-destructive">{signInError}</p> : null}
         </div>
       </div>
     );
@@ -713,10 +743,15 @@ export default function AdminPage() {
       <div className="mb-8 rounded-3xl border border-border bg-card p-8 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Admin panel</p>
-            <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Site manager</h1>
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Admin panel
+            </p>
+            <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
+              Site manager
+            </h1>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Edit your name, About Me, blog posts, notes, and watch page metrics from one dashboard.
+              Edit your name, About Me, blog posts, notes, and watch page metrics from one
+              dashboard.
             </p>
           </div>
 
@@ -748,7 +783,9 @@ export default function AdminPage() {
         <aside className="space-y-4 rounded-3xl border border-border bg-secondary p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Content manager</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Content manager
+              </p>
               <p className="text-sm text-muted-foreground">Pick a workspace to edit.</p>
             </div>
             <Activity className="h-5 w-5 text-muted-foreground" />
@@ -779,22 +816,76 @@ export default function AdminPage() {
             </div>
           ) : null}
 
+          {activeTab === "messages" ? (
+            <section className="rounded-3xl border border-border bg-card p-8">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Messages
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Contact messages</h2>
+                </div>
+                <div className="rounded-full border border-border bg-secondary px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  Total: {messages.length}
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="rounded-3xl border border-border bg-secondary p-5 text-sm text-muted-foreground">
+                    No messages received yet.
+                  </div>
+                ) : (
+                  messages.map((messageItem) => (
+                    <div
+                      key={messageItem.id}
+                      className="rounded-3xl border border-border bg-background p-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {messageItem.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{messageItem.email}</p>
+                        </div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                          {new Date(messageItem.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <p className="mt-4 text-sm leading-relaxed text-foreground">
+                        {messageItem.body}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          ) : null}
+
           {activeTab === "dashboard" ? (
             <section className="rounded-3xl border border-border bg-card p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Dashboard</p>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Dashboard
+                  </p>
                   <h2 className="mt-2 text-2xl font-bold tracking-tight">Traffic & activity</h2>
                 </div>
                 <div className="rounded-full border border-border bg-secondary px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Updated {metrics.length ? "from Supabase" : "once seeded"}{" "}
-                  {githubLoading ? "• GitHub loading" : githubError ? "• GitHub unavailable" : "• GitHub loaded"}
+                  {githubLoading
+                    ? "• GitHub loading"
+                    : githubError
+                      ? "• GitHub unavailable"
+                      : "• GitHub loaded"}
                 </div>
               </div>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-3xl border border-border bg-secondary p-6">
-                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Blog posts</p>
+                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
+                    Blog posts
+                  </p>
                   <p className="mt-3 text-3xl font-semibold text-foreground">{blogPosts.length}</p>
                 </div>
                 <div className="rounded-3xl border border-border bg-secondary p-6">
@@ -802,11 +893,17 @@ export default function AdminPage() {
                   <p className="mt-3 text-3xl font-semibold text-foreground">{notes.length}</p>
                 </div>
                 <div className="rounded-3xl border border-border bg-secondary p-6">
-                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Projects</p>
-                  <p className="mt-3 text-3xl font-semibold text-foreground">{githubLoading ? "…" : githubRepos.length}</p>
+                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
+                    Projects
+                  </p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">
+                    {githubLoading ? "…" : githubRepos.length}
+                  </p>
                 </div>
                 <div className="rounded-3xl border border-border bg-secondary p-6">
-                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">Content blocks</p>
+                  <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
+                    Content blocks
+                  </p>
                   <p className="mt-3 text-3xl font-semibold text-foreground">{sections.length}</p>
                 </div>
               </div>
@@ -814,9 +911,13 @@ export default function AdminPage() {
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {metrics.map((metric) => (
                   <div key={metric.page} className="rounded-3xl border border-border bg-card p-6">
-                    <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">{metric.page}</p>
+                    <p className="text-sm uppercase tracking-[0.18em] text-muted-foreground">
+                      {metric.page}
+                    </p>
                     <p className="mt-3 text-3xl font-semibold text-foreground">{metric.views}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Last updated {new Date(metric.updated_at).toLocaleDateString()}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Last updated {new Date(metric.updated_at).toLocaleDateString()}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -827,8 +928,12 @@ export default function AdminPage() {
             <section className="rounded-3xl border border-border bg-card p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Profile</p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Edit your site name and hero content</h2>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Profile
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                    Edit your site name and hero content
+                  </h2>
                 </div>
                 <div className="rounded-full border border-border bg-secondary px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                   Sidebar + homepage
@@ -840,7 +945,9 @@ export default function AdminPage() {
                   Site name
                   <input
                     value={profileState.siteName}
-                    onChange={(event) => setProfileState((prev) => ({ ...prev, siteName: event.target.value }))}
+                    onChange={(event) =>
+                      setProfileState((prev) => ({ ...prev, siteName: event.target.value }))
+                    }
                     className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                   />
                 </label>
@@ -849,7 +956,9 @@ export default function AdminPage() {
                   Hero title
                   <input
                     value={profileState.heroTitle}
-                    onChange={(event) => setProfileState((prev) => ({ ...prev, heroTitle: event.target.value }))}
+                    onChange={(event) =>
+                      setProfileState((prev) => ({ ...prev, heroTitle: event.target.value }))
+                    }
                     className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                   />
                 </label>
@@ -859,7 +968,9 @@ export default function AdminPage() {
                 Sidebar about text
                 <textarea
                   value={profileState.sidebarAbout}
-                  onChange={(event) => setProfileState((prev) => ({ ...prev, sidebarAbout: event.target.value }))}
+                  onChange={(event) =>
+                    setProfileState((prev) => ({ ...prev, sidebarAbout: event.target.value }))
+                  }
                   rows={4}
                   placeholder="I'm Divyanshu, software engineer and open-source creator. This is my digital garden."
                   className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
@@ -870,7 +981,9 @@ export default function AdminPage() {
                 Hero body
                 <textarea
                   value={profileState.heroBody}
-                  onChange={(event) => setProfileState((prev) => ({ ...prev, heroBody: event.target.value }))}
+                  onChange={(event) =>
+                    setProfileState((prev) => ({ ...prev, heroBody: event.target.value }))
+                  }
                   rows={8}
                   className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                 />
@@ -888,114 +1001,13 @@ export default function AdminPage() {
             </section>
           ) : null}
 
-          {activeTab === "about" ? (
-            <section className="rounded-3xl border border-border bg-card p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">About Me</p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Edit your About page content</h2>
-                </div>
-                <div className="rounded-full border border-border bg-secondary px-3 py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  About page
-                </div>
-              </div>
-
-              <label className="mt-6 block text-sm font-semibold text-foreground">
-                Heading
-                <input
-                  value={aboutState.title}
-                  onChange={(event) => setAboutState((prev) => ({ ...prev, title: event.target.value }))}
-                  className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-                />
-              </label>
-
-              <label className="mt-6 block text-sm font-semibold text-foreground">Body</label>
-              <div className="mt-4 rounded-2xl border border-border bg-secondary/70 p-3">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleWrapper(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "**")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Bold
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleWrapper(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "*")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Italic
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleWrapper(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "__")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Underline
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleWrapper(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "~~")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Strike
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => togglePrefix(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "- ")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Bullet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => togglePrefix(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "1. ")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Numbered
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => togglePrefix(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })), "> ")}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Quote
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertLink(aboutTextareaRef.current, aboutState.body, (value) => setAboutState((prev) => ({ ...prev, body: value })))}
-                    className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                  >
-                    Link
-                  </button>
-                </div>
-              </div>
-              <div className="mt-2 h-px bg-border" />
-              <textarea
-                ref={aboutTextareaRef}
-                value={aboutState.body}
-                onChange={(event) => setAboutState((prev) => ({ ...prev, body: event.target.value }))}
-                rows={12}
-                className="mt-4 w-full min-h-[320px] rounded-2xl border border-border bg-background px-4 py-4 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-              />
-
-              <button
-                type="button"
-                onClick={handleSaveAbout}
-                disabled={saving}
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Save About Me
-                <ArrowUpRight className="h-4 w-4" />
-              </button>
-            </section>
-          ) : null}
-
           {activeTab === "blog" ? (
             <section className="rounded-3xl border border-border bg-card p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Blog</p>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Blog
+                  </p>
                   <h2 className="mt-2 text-2xl font-bold tracking-tight">Create and edit posts</h2>
                 </div>
                 <button
@@ -1040,7 +1052,9 @@ export default function AdminPage() {
                     Title
                     <input
                       value={blogState.title}
-                      onChange={(event) => setBlogState((prev) => ({ ...prev, title: event.target.value }))}
+                      onChange={(event) =>
+                        setBlogState((prev) => ({ ...prev, title: event.target.value }))
+                      }
                       className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                     />
                   </label>
@@ -1049,7 +1063,9 @@ export default function AdminPage() {
                     Slug
                     <input
                       value={blogState.slug}
-                      onChange={(event) => setBlogState((prev) => ({ ...prev, slug: event.target.value }))}
+                      onChange={(event) =>
+                        setBlogState((prev) => ({ ...prev, slug: event.target.value }))
+                      }
                       placeholder="auto-generated from title"
                       className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                     />
@@ -1162,7 +1178,10 @@ export default function AdminPage() {
                       </div>
                       <div className="mt-4 h-px bg-border" />
                       <div className="mt-3 min-h-[520px] rounded-2xl bg-background p-4 text-sm text-foreground">
-                        <EditorContent editor={editor} className="min-h-[460px] w-full rounded-2xl bg-background px-2 py-3 outline-none" />
+                        <EditorContent
+                          editor={editor}
+                          className="min-h-[460px] w-full rounded-2xl bg-background px-2 py-3 outline-none"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1171,7 +1190,9 @@ export default function AdminPage() {
                     <input
                       type="checkbox"
                       checked={blogState.published}
-                      onChange={(event) => setBlogState((prev) => ({ ...prev, published: event.target.checked }))}
+                      onChange={(event) =>
+                        setBlogState((prev) => ({ ...prev, published: event.target.checked }))
+                      }
                       className="h-4 w-4 rounded border border-border bg-background text-foreground"
                     />
                     Published
@@ -1207,8 +1228,12 @@ export default function AdminPage() {
             <section className="rounded-3xl border border-border bg-card p-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">Notes</p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Create and manage notes</h2>
+                  <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Notes
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                    Create and manage notes
+                  </h2>
                 </div>
                 <button
                   type="button"
@@ -1239,7 +1264,9 @@ export default function AdminPage() {
                         }`}
                       >
                         <div className="font-semibold text-foreground">{note.title}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{new Date(note.updated_at).toLocaleDateString()}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {new Date(note.updated_at).toLocaleDateString()}
+                        </div>
                       </button>
                     ))
                   )}
@@ -1250,7 +1277,9 @@ export default function AdminPage() {
                     Title
                     <input
                       value={noteState.title}
-                      onChange={(event) => setNoteState((prev) => ({ ...prev, title: event.target.value }))}
+                      onChange={(event) =>
+                        setNoteState((prev) => ({ ...prev, title: event.target.value }))
+                      }
                       className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                     />
                   </label>
@@ -1260,56 +1289,109 @@ export default function AdminPage() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => toggleWrapper(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "**")}
+                        onClick={() =>
+                          toggleWrapper(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "**",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Bold
                       </button>
                       <button
                         type="button"
-                        onClick={() => toggleWrapper(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "*")}
+                        onClick={() =>
+                          toggleWrapper(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "*",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Italic
                       </button>
                       <button
                         type="button"
-                        onClick={() => toggleWrapper(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "__")}
+                        onClick={() =>
+                          toggleWrapper(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "__",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Underline
                       </button>
                       <button
                         type="button"
-                        onClick={() => toggleWrapper(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "~~")}
+                        onClick={() =>
+                          toggleWrapper(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "~~",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Strike
                       </button>
                       <button
                         type="button"
-                        onClick={() => togglePrefix(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "- ")}
+                        onClick={() =>
+                          togglePrefix(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "- ",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Bullet
                       </button>
                       <button
                         type="button"
-                        onClick={() => togglePrefix(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "1. ")}
+                        onClick={() =>
+                          togglePrefix(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "1. ",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Numbered
                       </button>
                       <button
                         type="button"
-                        onClick={() => togglePrefix(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })), "> ")}
+                        onClick={() =>
+                          togglePrefix(
+                            noteTextareaRef.current,
+                            noteState.body,
+                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
+                            "> ",
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Quote
                       </button>
                       <button
                         type="button"
-                        onClick={() => insertLink(noteTextareaRef.current, noteState.body, (value) => setNoteState((prev) => ({ ...prev, body: value })))}
+                        onClick={() =>
+                          insertLink(noteTextareaRef.current, noteState.body, (value) =>
+                            setNoteState((prev) => ({ ...prev, body: value })),
+                          )
+                        }
                         className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
                       >
                         Link
@@ -1320,7 +1402,9 @@ export default function AdminPage() {
                   <textarea
                     ref={noteTextareaRef}
                     value={noteState.body}
-                    onChange={(event) => setNoteState((prev) => ({ ...prev, body: event.target.value }))}
+                    onChange={(event) =>
+                      setNoteState((prev) => ({ ...prev, body: event.target.value }))
+                    }
                     rows={12}
                     className="mt-4 w-full min-h-[320px] rounded-2xl border border-border bg-background px-4 py-4 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
                   />
@@ -1350,7 +1434,6 @@ export default function AdminPage() {
               </div>
             </section>
           ) : null}
-
         </main>
       </div>
     </div>

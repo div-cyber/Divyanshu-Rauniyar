@@ -29,6 +29,14 @@ create table if not exists notes (
   updated_at timestamp with time zone default now()
 );
 
+create table if not exists messages (
+  id bigint generated always as identity primary key,
+  name text not null,
+  email text not null,
+  body text not null,
+  created_at timestamp with time zone default now()
+);
+
 create table if not exists page_metrics (
   id bigint generated always as identity primary key,
   page text not null unique,
@@ -54,3 +62,19 @@ values
   ('notes', 0),
   ('projects', 0)
 on conflict (page) do nothing;
+
+-- Create a default admin auth user in Supabase Auth.
+-- This cannot be run from the Supabase SQL editor because auth admin functions
+-- are not exposed as regular SQL functions in that environment.
+-- Instead, create the user via the Supabase dashboard or a service-role API call.
+-- Example using supabase-js in a trusted server environment:
+--
+-- const supabaseAdmin = createClient(
+--   process.env.SUPABASE_URL,
+--   process.env.SUPABASE_SERVICE_ROLE_KEY
+-- );
+-- await supabaseAdmin.auth.admin.createUser({
+--   email: 'yanshudiv22@gmail.com',
+--   password: 'iwillnot_share2008',
+--   email_confirm: true,
+-- });

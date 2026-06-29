@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ContentSection,
-  ContentSectionType,
-  fetchContentSection,
-} from "../lib/supabase";
+import { ContentSection, ContentSectionType, fetchContentSection } from "../lib/supabase";
 
 export function useContentSection(type: ContentSectionType) {
   const [section, setSection] = useState<ContentSection | null>(null);

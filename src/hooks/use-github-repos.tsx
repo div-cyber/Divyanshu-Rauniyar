@@ -24,7 +24,9 @@ export function useGithubRepos(username: string, perPage = 50) {
       setError(null);
 
       try {
-        const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=${perPage}`);
+        const response = await fetch(
+          `https://api.github.com/users/${username}/repos?sort=updated&per_page=${perPage}`,
+        );
         if (!mounted) return;
 
         if (!response.ok) {

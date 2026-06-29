@@ -14,8 +14,12 @@ export function RootLayout() {
       <div className="min-h-screen bg-background text-foreground">
         <div className="relative min-h-screen">
           {!isAdminPage && <SiteNav />}
-          <main className={`${isAdminPage ? "h-screen" : "ml-[280px] h-screen"} overflow-y-auto bg-background`}>
-            <div className={`min-h-screen border-border/10 bg-background px-6 py-10 md:px-10 lg:px-14 ${isAdminPage ? "" : "border-l"}`}>
+          <main
+            className={`${isAdminPage ? "h-screen" : "ml-[280px] h-screen"} overflow-y-auto bg-background`}
+          >
+            <div
+              className={`min-h-screen border-border/10 bg-background px-6 py-10 md:px-10 lg:px-14 ${isAdminPage ? "" : "border-l"}`}
+            >
               <Outlet />
               <SiteFooter />
             </div>

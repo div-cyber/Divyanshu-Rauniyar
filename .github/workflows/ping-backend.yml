@@ -1,0 +1,20 @@
+name: Ping Supabase Backend
+
+on:
+  schedule:
+    # Run every 3 days at 00:00 UTC
+    - cron: "0 0 */3 * *"
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: windows-latest
+    steps:
+      - name: Check Supabase Backend
+        run: |
+          # Make a simple request to Supabase to keep it alive
+          curl -X GET \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/"

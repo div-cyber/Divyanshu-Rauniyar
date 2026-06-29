@@ -1,71 +1,99 @@
-import { Link } from "react-router-dom";
-import { Github, Linkedin, Twitter, Instagram, Mail } from "lucide-react";
+import { Github, Linkedin, X, Instagram, Mail, Facebook } from "lucide-react";
 
-const social = [
-  { href: "https://github.com/", label: "GitHub", Icon: Github },
-  { href: "https://linkedin.com/", label: "LinkedIn", Icon: Linkedin },
-  { href: "https://twitter.com/", label: "Twitter", Icon: Twitter },
-  { href: "https://instagram.com/", label: "Instagram", Icon: Instagram },
-  { href: "mailto:hello@blackbyte.dev", label: "Email", Icon: Mail },
+const row1 = [
+  {
+    href: "https://www.instagram.com/div_yanshu22/?hl=en",
+    label: "Instagram",
+    username: "@div_yanshu22",
+    Icon: Instagram,
+  },
+  {
+    href: "https://www.linkedin.com/in/div-yanshu-505839323/",
+    label: "LinkedIn",
+    username: "Div Yanshu",
+    Icon: Linkedin,
+  },
+  {
+    href: "https://www.facebook.com/div.yanshu.1675275",
+    label: "Facebook",
+    username: "Div Yanshu",
+    Icon: Facebook,
+  },
+];
+const row2 = [
+  { href: "https://github.com/div-cyber", label: "GitHub", username: "div-cyber", Icon: Github },
+  { href: "https://x.com/Div_Yanshu22", label: "X", username: "@Div_Yanshu22", Icon: X },
+  {
+    href: "mailto:yanshudiv22@gmail.com",
+    label: "Email",
+    username: "yanshudiv22@gmail.com",
+    Icon: Mail,
+  },
 ];
 
 export function SiteFooter() {
+  const handleMailClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.open("https://mail.google.com/mail/?view=cm&fs=1&to=yanshudiv22@gmail.com", "_blank");
+  };
+
   return (
-    <footer className="mt-24 border-t border-border/60">
-      <div className="mx-auto grid max-w-5xl gap-10 px-5 py-12 md:grid-cols-3">
-        <div>
-          <div className="flex items-center gap-2 font-bold tracking-tight">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-black">
-              B
-            </span>
-            <span className="text-sm uppercase tracking-[0.18em]">Blackbyte</span>
-          </div>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            Built and maintained by Divyanshu Rauniyar from Nepal. Software, AI, and notes from the field.
-          </p>
-        </div>
-
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Site</h4>
-          <ul className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            {[
-              ["/blog", "Blog"],
-              ["/notes", "Notes"],
-              ["/projects", "Projects"],
-              ["/about", "About Me"],
-              ["/uses", "Uses"],
-              ["/now", "Now"],
-              ["/contact", "Contact"],
-            ].map(([to, label]) => (
-              <li key={to}>
-                <Link to={to} className="nav-link">{label}</Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Elsewhere</h4>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {social.map(({ href, label, Icon }) => (
+    <footer className="mt-8 border-t border-border/60">
+      <div className="mx-auto max-w-5xl px-5 py-6">
+        <div className="space-y-3">
+          {/* Row 1: Instagram, LinkedIn, Facebook */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {row1.map((item) => (
               <a
-                key={label}
-                href={href}
+                key={item.href}
+                href={item.href}
                 target="_blank"
                 rel="noreferrer"
-                aria-label={label}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
               >
-                <Icon className="h-4 w-4" />
+                <item.Icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+                <span className="text-xs">{item.username}</span>
               </a>
             ))}
           </div>
+
+          {/* Row 2: GitHub, X, Email */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {row2.map((item) => (
+              item.href.startsWith("mailto") ? (
+                <button
+                  key={item.href}
+                  onClick={handleMailClick}
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground w-full"
+                >
+                  <item.Icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-xs">{item.username}</span>
+                </button>
+              ) : (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
+                >
+                  <item.Icon className="h-5 w-5" />
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-xs">{item.username}</span>
+                </a>
+              )
+            ))}
+          </div>
         </div>
-      </div>
-      <div className="border-t border-border/60">
-        <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-2 px-5 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Divyanshu Rauniyar. All rights reserved.</p>
-          <p>Made with care in Kathmandu, Nepal.</p>
+
+        {/* Copyright text */}
+        <div className="mt-6 border-t border-border/60 pt-5">
+          <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} Divyanshu Rauniyar. All rights reserved.</p>
+            <p>Made with care in Kathmandu, Nepal.</p>
+          </div>
         </div>
       </div>
     </footer>

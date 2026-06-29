@@ -31,6 +31,14 @@ export type Note = {
   updated_at: string;
 };
 
+export type Message = {
+  id: number;
+  name: string;
+  email: string;
+  body: string;
+  created_at: string;
+};
+
 export type PageMetric = {
   id: number;
   page: string;
@@ -79,16 +87,16 @@ export async function getCurrentSession() {
   return supabase.auth.getSession();
 }
 
-export function onAuthStateChange(callback: (event: AuthChangeEvent, authSession: Session | null) => void) {
+export function onAuthStateChange(
+  callback: (event: AuthChangeEvent, authSession: Session | null) => void,
+) {
   return supabase.auth.onAuthStateChange(callback);
 }
 
-export async function signInWithMagicLink(email: string) {
-  return supabase.auth.signInWithOtp({
+export async function signInWithPassword(email: string, password: string) {
+  return supabase.auth.signInWithPassword({
     email,
-    options: {
-      emailRedirectTo: `${window.location.origin}/admin`,
-    },
+    password,
   });
 }
 
@@ -111,25 +119,21 @@ export async function fetchContentSections() {
     .order("type", { ascending: true });
 }
 
-export async function updateContentSection(id: number, updates: Partial<Pick<ContentSection, "title" | "body">>) {
-  return supabase
-    .from("content_sections")
-    .update(updates)
-    .eq("id", id);
+export async function updateContentSection(
+  id: number,
+  updates: Partial<Pick<ContentSection, "title" | "body">>,
+) {
+  return supabase.from("content_sections").update(updates).eq("id", id);
 }
 
-export async function createContentSections(entries: Array<Omit<ContentSection, "id" | "created_at">>) {
-  return supabase
-    .from("content_sections")
-    .insert(entries)
-    .select("id, type, title, body");
+export async function createContentSections(
+  entries: Array<Omit<ContentSection, "id" | "created_at">>,
+) {
+  return supabase.from("content_sections").insert(entries).select("id, type, title, body");
 }
 
 export async function deleteContentSection(id: number) {
-  return supabase
-    .from("content_sections")
-    .delete()
-    .eq("id", id);
+  return supabase.from("content_sections").delete().eq("id", id);
 }
 
 export async function fetchBlogPosts() {
@@ -139,6 +143,14 @@ export async function fetchBlogPosts() {
     .order("updated_at", { ascending: false });
 }
 
+export async function fetchBlogPostBySlug(slug: string) {
+  return supabase
+    .from("blog_posts")
+    .select("id, slug, title, body, published, created_at, updated_at")
+    .eq("slug", slug)
+    .maybeSingle<BlogPost>();
+}
+
 export async function createBlogPost(post: Omit<BlogPost, "id" | "created_at" | "updated_at">) {
   return supabase
     .from("blog_posts")
@@ -146,7 +158,10 @@ export async function createBlogPost(post: Omit<BlogPost, "id" | "created_at" | 
     .select("id, slug, title, body, published, created_at, updated_at");
 }
 
-export async function updateBlogPost(id: number, updates: Partial<Omit<BlogPost, "id" | "created_at" | "updated_at">>) {
+export async function updateBlogPost(
+  id: number,
+  updates: Partial<Omit<BlogPost, "id" | "created_at" | "updated_at">>,
+) {
   return supabase
     .from("blog_posts")
     .update(updates)
@@ -155,10 +170,7 @@ export async function updateBlogPost(id: number, updates: Partial<Omit<BlogPost,
 }
 
 export async function deleteBlogPost(id: number) {
-  return supabase
-    .from("blog_posts")
-    .delete()
-    .eq("id", id);
+  return supabase.from("blog_posts").delete().eq("id", id);
 }
 
 export async function fetchNotes() {
@@ -168,14 +180,22 @@ export async function fetchNotes() {
     .order("updated_at", { ascending: false });
 }
 
-export async function createNote(note: Omit<Note, "id" | "created_at" | "updated_at">) {
+export async function fetchNoteById(id: number) {
   return supabase
     .from("notes")
-    .insert(note)
-    .select("id, title, body, created_at, updated_at");
+    .select("id, title, body, created_at, updated_at")
+    .eq("id", id)
+    .maybeSingle<Note>();
 }
 
-export async function updateNote(id: number, updates: Partial<Omit<Note, "id" | "created_at" | "updated_at">>) {
+export async function createNote(note: Omit<Note, "id" | "created_at" | "updated_at">) {
+  return supabase.from("notes").insert(note).select("id, title, body, created_at, updated_at");
+}
+
+export async function updateNote(
+  id: number,
+  updates: Partial<Omit<Note, "id" | "created_at" | "updated_at">>,
+) {
   return supabase
     .from("notes")
     .update(updates)
@@ -184,10 +204,18 @@ export async function updateNote(id: number, updates: Partial<Omit<Note, "id" | 
 }
 
 export async function deleteNote(id: number) {
+  return supabase.from("notes").delete().eq("id", id);
+}
+
+export async function fetchMessages() {
   return supabase
-    .from("notes")
-    .delete()
-    .eq("id", id);
+    .from("messages")
+    .select("id, name, email, body, created_at")
+    .order("created_at", { ascending: false });
+}
+
+export async function createMessage(message: Omit<Message, "id" | "created_at">) {
+  return supabase.from("messages").insert(message).select("id, name, email, body, created_at");
 }
 
 export async function fetchPageMetrics() {

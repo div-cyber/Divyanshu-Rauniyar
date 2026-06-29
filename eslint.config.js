@@ -26,8 +26,7 @@ export default tseslint.config(
           paths: [
             {
               name: "server-only",
-              message:
-                "Remove TanStack Start or server-only module references in this project.",
+              message: "Remove TanStack Start or server-only module references in this project.",
             },
           ],
         },
