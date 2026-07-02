@@ -1,6 +1,6 @@
 import { Github, Linkedin, X, Instagram, Mail, Facebook } from "lucide-react";
 
-const row1 = [
+const allSocials = [
   {
     href: "https://www.instagram.com/div_yanshu22/?hl=en",
     label: "Instagram",
@@ -19,8 +19,6 @@ const row1 = [
     username: "Div Yanshu",
     Icon: Facebook,
   },
-];
-const row2 = [
   { href: "https://github.com/div-cyber", label: "GitHub", username: "div-cyber", Icon: Github },
   { href: "https://x.com/Div_Yanshu22", label: "X", username: "@Div_Yanshu22", Icon: X },
   {
@@ -40,10 +38,19 @@ export function SiteFooter() {
   return (
     <footer className="mt-8 border-t border-border/60">
       <div className="mx-auto max-w-5xl px-5 py-6">
-        <div className="space-y-3">
-          {/* Row 1: Instagram, LinkedIn, Facebook */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {row1.map((item) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {allSocials.map((item) => (
+            item.href.startsWith("mailto") ? (
+              <button
+                key={item.href}
+                onClick={handleMailClick}
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground w-full"
+              >
+                <item.Icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+                <span className="text-xs">{item.username}</span>
+              </button>
+            ) : (
               <a
                 key={item.href}
                 href={item.href}
@@ -55,37 +62,8 @@ export function SiteFooter() {
                 <span className="font-medium">{item.label}</span>
                 <span className="text-xs">{item.username}</span>
               </a>
-            ))}
-          </div>
-
-          {/* Row 2: GitHub, X, Email */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {row2.map((item) => (
-              item.href.startsWith("mailto") ? (
-                <button
-                  key={item.href}
-                  onClick={handleMailClick}
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground w-full"
-                >
-                  <item.Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
-                  <span className="text-xs">{item.username}</span>
-                </button>
-              ) : (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-4 text-sm text-muted-foreground transition hover:border-foreground/30 hover:bg-secondary hover:text-foreground"
-                >
-                  <item.Icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
-                  <span className="text-xs">{item.username}</span>
-                </a>
-              )
-            ))}
-          </div>
+            )
+          ))}
         </div>
 
         {/* Copyright text */}

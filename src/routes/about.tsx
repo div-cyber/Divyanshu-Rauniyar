@@ -15,10 +15,65 @@ export default function AboutPage() {
   return (
     <div className="fade-up">
       <div className="max-w-7xl mx-auto px-5 pt-5 pb-10 lg:pt-8 lg:pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-8">
-            <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">ABOUT ME</p>
+        {/* "ABOUT ME" top for all screens */}
+        <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">ABOUT ME</p>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mt-4">
+          {/* Left Column - Main Content (desktop: lg:col-span-8) */}
+          <div className="lg:col-span-8 order-2 lg:order-1">
+            {/* Profile Image - Mobile only first, after ABOUT ME */}
+            <div className="lg:hidden mb-8 relative">
+              <div
+                className="absolute -top-6 -right-6 w-24 h-24 opacity-20"
+                style={{
+                  backgroundImage: "radial-gradient(circle, #000 1px, transparent 1px)",
+                  backgroundSize: "8px 8px",
+                }}
+              ></div>
+              <div className="absolute -bottom-4 -right-4 text-red-400 opacity-30">
+                <svg
+                  width="120"
+                  height="120"
+                  viewBox="0 0 120 120"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 100 Q60 40 100 100"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <img
+                src={profileImage}
+                alt="Divyanshu Rauniyar"
+                className="w-full rounded-2xl shadow-xl object-cover aspect-[4/5]"
+              />
+            </div>
+
+            {/* Contact Info - Mobile only, under image and before title */}
+            <div className="lg:hidden mb-8 space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-foreground" />
+                <span>Nepal</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-4 h-4 text-foreground" />
+                <span>Aspiring Tech Enthusiast</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-4 h-4 text-foreground" />
+                <span>Founder, Black Byte</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-foreground" />
+                <span>yanshudiv22@gmail.com</span>
+              </div>
+            </div>
+
             <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
               Hi, I’m Divyanshu
             </h1>
@@ -109,10 +164,10 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Right Column - Profile & Contact */}
-          <div className="lg:col-span-4 space-y-8">
-            {/* Profile Image */}
-            <div className="relative">
+          {/* Right Column - Profile & Contact (desktop only) */}
+          <div className="lg:col-span-4 space-y-8 order-1 lg:order-2 hidden lg:block">
+            {/* Profile Image - Desktop only */}
+            <div className="hidden lg:block relative">
               <div
                 className="absolute -top-6 -right-6 w-24 h-24 opacity-20"
                 style={{
