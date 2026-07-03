@@ -5,11 +5,28 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
-import { ArrowUpRight, Plus, LogOut, Settings, User, Trash2, Activity } from "lucide-react";
+import {
+  ArrowUpRight,
+  Plus,
+  LogOut,
+  Settings,
+  User,
+  Trash2,
+  Activity,
+  Upload,
+  Image as ImageIcon,
+  Link as LinkIcon,
+} from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { uploadImage } from "../lib/supabase";
 import {
   BlogPost,
   ContentSection,
+  ContentSectionType,
   Message,
+  Note,
   defaultContent,
   deleteBlogPost,
   deleteContentSection,
@@ -32,28 +49,13 @@ import {
   createNote,
 } from "../lib/supabase";
 import { useGithubRepos } from "../hooks/use-github-repos";
+import { useNavigate } from "react-router-dom";
 
 type UserSession = {
   email: string;
 };
 
 type AdminTab = "dashboard" | "profile" | "blog" | "notes" | "messages";
-
-type Note = {
-  id: number;
-  title: string;
-  body: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type Message = {
-  id: number;
-  name: string;
-  email: string;
-  body: string;
-  created_at: string;
-};
 
 type PageMetric = {
   id: number;
@@ -79,6 +81,7 @@ function slugify(text: string) {
 }
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("yanshudiv22@gmail.com");
   const [password, setPassword] = useState("iwillnot_share2008");
   const [session, setSession] = useState<UserSession | null>(null);
@@ -105,6 +108,9 @@ export default function AdminPage() {
     sidebarAbout: "",
   });
   const [blogState, setBlogState] = useState({ title: "", slug: "", body: "", published: true });
+  const [blogEditorTab, setBlogEditorTab] = useState<"richtext" | "markdown">("richtext");
+  const [blogMarkdown, setBlogMarkdown] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [noteState, setNoteState] = useState({ title: "", body: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -513,32 +519,19 @@ export default function AdminPage() {
   }
 
   function handleBlogSelect(blog: BlogPost) {
-    setSelectedBlog(blog);
-    setBlogState({
-      title: blog.title,
-      slug: blog.slug,
-      body: blog.body,
-      published: blog.published,
-    });
-    setMessage(null);
+    navigate(`/blog-editor/${blog.id}`);
   }
 
   function handleNewBlog() {
-    setSelectedBlog(null);
-    setBlogState({ title: "", slug: "", body: "", published: true });
-    setMessage(null);
+    navigate("/blog-editor");
   }
 
   function handleNoteSelect(note: Note) {
-    setSelectedNote(note);
-    setNoteState({ title: note.title, body: note.body });
-    setMessage(null);
+    navigate(`/note-editor/${note.id}`);
   }
 
   function handleNewNote() {
-    setSelectedNote(null);
-    setNoteState({ title: "", body: "" });
-    setMessage(null);
+    navigate("/note-editor");
   }
 
   async function handleSaveBlog() {
@@ -550,11 +543,21 @@ export default function AdminPage() {
     setSaving(true);
     setMessage(null);
 
+    // Determine which content to save
+    let finalBody: string;
+    if (blogEditorTab === "markdown") {
+      // For markdown, we need to convert to HTML or just save as is? Let's save both? Wait, let's just save the markdown to the body, but we need to adjust the blog post page to render it correctly!
+      // Wait let's just save the content from the active tab!
+      finalBody = blogMarkdown;
+    } else {
+      finalBody = blogState.body;
+    }
+
     if (selectedBlog) {
       const { error } = await updateBlogPost(selectedBlog.id, {
         title: blogState.title,
         slug: blogState.slug || slugify(blogState.title),
-        body: blogState.body,
+        body: finalBody,
         published: blogState.published,
       });
 
@@ -569,7 +572,7 @@ export default function AdminPage() {
       const { error } = await createBlogPost({
         title: blogState.title,
         slug: blogState.slug || slugify(blogState.title),
-        body: blogState.body,
+        body: finalBody,
         published: blogState.published,
       });
 
@@ -1003,12 +1006,12 @@ export default function AdminPage() {
 
           {activeTab === "blog" ? (
             <section className="rounded-3xl border border-border bg-card p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     Blog
                   </p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Create and edit posts</h2>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Manage Posts</h2>
                 </div>
                 <button
                   type="button"
@@ -1016,224 +1019,51 @@ export default function AdminPage() {
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:border-foreground/30"
                 >
                   <Plus className="h-4 w-4" />
-                  New post
+                  New Post
                 </button>
               </div>
 
-              <div className="mt-8 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                <div className="space-y-3">
-                  {blogPosts.length === 0 ? (
-                    <div className="rounded-3xl border border-border bg-secondary p-5 text-sm text-muted-foreground">
-                      No blog posts yet. Create the first one using the editor.
-                    </div>
-                  ) : (
-                    blogPosts.map((post) => (
-                      <button
-                        key={post.id}
-                        type="button"
-                        onClick={() => handleBlogSelect(post)}
-                        className={`w-full rounded-3xl border px-4 py-4 text-left transition ${
-                          selectedBlog?.id === post.id
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:bg-secondary"
-                        }`}
-                      >
+              <div className="space-y-4">
+                {blogPosts.length === 0 ? (
+                  <div className="rounded-3xl border border-border bg-secondary p-5 text-sm text-muted-foreground">
+                    No blog posts yet. Create the first one!
+                  </div>
+                ) : (
+                  blogPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="rounded-3xl border border-border bg-background p-5 flex items-center justify-between gap-4"
+                    >
+                      <div>
                         <div className="font-semibold text-foreground">{post.title}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {post.slug} · {post.published ? "Published" : "Draft"}
+                          {post.slug} · {post.published ? "Published" : "Draft"} ·{" "}
+                          {new Date(post.updated_at).toLocaleDateString()}
                         </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-foreground">
-                    Title
-                    <input
-                      value={blogState.title}
-                      onChange={(event) =>
-                        setBlogState((prev) => ({ ...prev, title: event.target.value }))
-                      }
-                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-                    />
-                  </label>
-
-                  <label className="mt-4 block text-sm font-semibold text-foreground">
-                    Slug
-                    <input
-                      value={blogState.slug}
-                      onChange={(event) =>
-                        setBlogState((prev) => ({ ...prev, slug: event.target.value }))
-                      }
-                      placeholder="auto-generated from title"
-                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-                    />
-                  </label>
-
-                  <label className="mt-4 block text-sm font-semibold text-foreground">Body</label>
-                  <div className="mt-2 rounded-2xl border border-border bg-background p-4">
-                    <div className="rounded-2xl border border-border/80 bg-background p-3">
-                      <div className="flex flex-wrap gap-2 rounded-2xl bg-secondary/70 p-2">
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleBold().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("bold")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Bold
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleItalic().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("italic")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Italic
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("underline")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Underline
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleStrike().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("strike")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Strike
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("bulletList")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Bullet
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("orderedList")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Numbered
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("blockquote")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Quote
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => editor?.chain().focus().setHardBreak().run()}
-                          className="rounded-full border border-border px-3 py-1 text-xs font-medium transition hover:border-foreground/30"
-                        >
-                          Break
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const url = window.prompt("Enter link URL");
-                            if (url) {
-                              editor?.chain().focus().setLink({ href: url }).run();
-                            }
-                          }}
-                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                            editor?.isActive("link")
-                              ? "border-foreground bg-foreground/10 text-foreground"
-                              : "border-border bg-background text-muted-foreground hover:border-foreground/30"
-                          }`}
-                        >
-                          Link
-                        </button>
                       </div>
-                      <div className="mt-4 h-px bg-border" />
-                      <div className="mt-3 min-h-[520px] rounded-2xl bg-background p-4 text-sm text-foreground">
-                        <EditorContent
-                          editor={editor}
-                          className="min-h-[460px] w-full rounded-2xl bg-background px-2 py-3 outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <label className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={blogState.published}
-                      onChange={(event) =>
-                        setBlogState((prev) => ({ ...prev, published: event.target.checked }))
-                      }
-                      className="h-4 w-4 rounded border border-border bg-background text-foreground"
-                    />
-                    Published
-                  </label>
-
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSaveBlog}
-                      disabled={saving}
-                      className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Save post
-                    </button>
-                    {selectedBlog ? (
                       <button
                         type="button"
-                        onClick={handleDeleteBlog}
-                        disabled={saving}
-                        className="inline-flex items-center justify-center rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-foreground transition hover:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => handleBlogSelect(post)}
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground/30"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
+                        Edit
+                        <ArrowUpRight className="h-4 w-4" />
                       </button>
-                    ) : null}
-                  </div>
-                </div>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           ) : null}
 
           {activeTab === "notes" ? (
             <section className="rounded-3xl border border-border bg-card p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     Notes
                   </p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">
-                    Create and manage notes
-                  </h2>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">Manage Notes</h2>
                 </div>
                 <button
                   type="button"
@@ -1245,192 +1075,34 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="mt-8 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-                <div className="space-y-3">
-                  {notes.length === 0 ? (
-                    <div className="rounded-3xl border border-border bg-secondary p-5 text-sm text-muted-foreground">
-                      No notes yet. Use the editor to add your first note.
-                    </div>
-                  ) : (
-                    notes.map((note) => (
-                      <button
-                        key={note.id}
-                        type="button"
-                        onClick={() => handleNoteSelect(note)}
-                        className={`w-full rounded-3xl border px-4 py-4 text-left transition ${
-                          selectedNote?.id === note.id
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:bg-secondary"
-                        }`}
-                      >
+              <div className="space-y-4">
+                {notes.length === 0 ? (
+                  <div className="rounded-3xl border border-border bg-secondary p-5 text-sm text-muted-foreground">
+                    No notes yet. Create the first one!
+                  </div>
+                ) : (
+                  notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="rounded-3xl border border-border bg-background p-5 flex items-center justify-between gap-4"
+                    >
+                      <div>
                         <div className="font-semibold text-foreground">{note.title}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           {new Date(note.updated_at).toLocaleDateString()}
                         </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-foreground">
-                    Title
-                    <input
-                      value={noteState.title}
-                      onChange={(event) =>
-                        setNoteState((prev) => ({ ...prev, title: event.target.value }))
-                      }
-                      className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-                    />
-                  </label>
-
-                  <label className="mt-4 block text-sm font-semibold text-foreground">Body</label>
-                  <div className="mt-4 rounded-2xl border border-border bg-secondary/70 p-3">
-                    <div className="flex flex-wrap gap-2">
+                      </div>
                       <button
                         type="button"
-                        onClick={() =>
-                          toggleWrapper(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "**",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
+                        onClick={() => handleNoteSelect(note)}
+                        className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground/30"
                       >
-                        Bold
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleWrapper(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "*",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Italic
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleWrapper(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "__",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Underline
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleWrapper(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "~~",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Strike
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          togglePrefix(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "- ",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Bullet
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          togglePrefix(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "1. ",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Numbered
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          togglePrefix(
-                            noteTextareaRef.current,
-                            noteState.body,
-                            (value) => setNoteState((prev) => ({ ...prev, body: value })),
-                            "> ",
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Quote
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          insertLink(noteTextareaRef.current, noteState.body, (value) =>
-                            setNoteState((prev) => ({ ...prev, body: value })),
-                          )
-                        }
-                        className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground transition hover:border-foreground/30"
-                      >
-                        Link
+                        Edit
+                        <ArrowUpRight className="h-4 w-4" />
                       </button>
                     </div>
-                  </div>
-                  <div className="mt-2 h-px bg-border" />
-                  <textarea
-                    ref={noteTextareaRef}
-                    value={noteState.body}
-                    onChange={(event) =>
-                      setNoteState((prev) => ({ ...prev, body: event.target.value }))
-                    }
-                    rows={12}
-                    className="mt-4 w-full min-h-[320px] rounded-2xl border border-border bg-background px-4 py-4 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
-                  />
-
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={handleSaveNote}
-                      disabled={saving}
-                      className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Save note
-                    </button>
-                    {selectedNote ? (
-                      <button
-                        type="button"
-                        onClick={handleDeleteNote}
-                        disabled={saving}
-                        className="inline-flex items-center justify-center rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-foreground transition hover:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             </section>
           ) : null}

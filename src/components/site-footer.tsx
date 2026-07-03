@@ -39,7 +39,7 @@ export function SiteFooter() {
     <footer className="mt-8 border-t border-border/60">
       <div className="mx-auto max-w-5xl px-5 py-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {allSocials.map((item) => (
+          {allSocials.map((item) =>
             item.href.startsWith("mailto") ? (
               <button
                 key={item.href}
@@ -62,8 +62,8 @@ export function SiteFooter() {
                 <span className="font-medium">{item.label}</span>
                 <span className="text-xs">{item.username}</span>
               </a>
-            )
-          ))}
+            ),
+          )}
         </div>
 
         {/* Copyright text */}

@@ -4,6 +4,12 @@ import { ComingSoon } from "../components/coming-soon";
 import { useContentSection } from "../hooks/use-content-section";
 import { Note, fetchNotes } from "../lib/supabase";
 
+function stripHtml(html: string): string {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || "";
+}
+
 export default function NotesPage() {
   const { section } = useContentSection("notes");
   const [notes, setNotes] = useState<Note[]>([]);
@@ -77,8 +83,8 @@ export default function NotesPage() {
             </div>
             <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground">{note.title}</h2>
             <p className="mt-4 text-sm text-muted-foreground">
-              {note.body.slice(0, 260)}
-              {note.body.length > 260 ? "…" : ""}
+              {stripHtml(note.body).slice(0, 260)}
+              {stripHtml(note.body).length > 260 ? "…" : ""}
             </p>
             <div className="mt-6">
               <Link

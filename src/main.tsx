@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
+import "katex/dist/katex.min.css";
 import Loader from "./components/loader";
 import { fetchContentSections, fetchBlogPosts, fetchNotes, fetchMessages } from "./lib/supabase";
 

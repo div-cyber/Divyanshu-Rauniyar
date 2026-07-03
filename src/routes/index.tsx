@@ -12,6 +12,12 @@ import {
   createMessage,
 } from "../lib/supabase";
 
+function stripHtml(html: string): string {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || "";
+}
+
 const socials = [
   { href: "https://github.com/div-cyber", label: "GitHub", Icon: Github },
   { href: "https://www.linkedin.com/in/div-yanshu-505839323/", label: "LinkedIn", Icon: Linkedin },
@@ -195,8 +201,8 @@ export default function IndexPage() {
                     {post.title}
                   </h3>
                   <p className="mt-2 text-[0.975rem] leading-relaxed text-muted-foreground">
-                    {post.body.slice(0, 180)}
-                    {post.body.length > 180 ? "…" : ""}
+                    {stripHtml(post.body).slice(0, 180)}
+                    {stripHtml(post.body).length > 180 ? "…" : ""}
                   </p>
                 </Link>
               </li>
@@ -235,7 +241,7 @@ export default function IndexPage() {
 
       <Divider />
 
-      <section className="py-6">
+      <section id="send-message" className="py-6">
         <div className="rounded-2xl border border-border bg-secondary/50 px-6 py-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold tracking-tight">Send a message</h2>

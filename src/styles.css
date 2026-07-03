@@ -64,18 +64,18 @@
 :root {
   --radius: 0.625rem;
   /* BLACKBYTE — light */
-  --background: oklch(1 0 0);                       /* #FFFFFF */
-  --foreground: oklch(0.145 0 0);                   /* #111111 */
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --foreground: oklch(0.145 0 0); /* #111111 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.55 0.22 264);                  /* #2563EB */
+  --primary: oklch(0.55 0.22 264); /* #2563EB */
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.985 0.002 247);              /* #F8F9FA */
+  --secondary: oklch(0.985 0.002 247); /* #F8F9FA */
   --secondary-foreground: oklch(0.145 0 0);
   --muted: oklch(0.985 0.002 247);
-  --muted-foreground: oklch(0.5 0 0);               /* #666 */
+  --muted-foreground: oklch(0.5 0 0); /* #666 */
   --accent: oklch(0.55 0.22 264);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -102,13 +102,13 @@
 
 .dark {
   /* BLACKBYTE — dark */
-  --background: oklch(0.155 0 0);                   /* near #0d0d0f */
+  --background: oklch(0.155 0 0); /* near #0d0d0f */
   --foreground: oklch(0.97 0 0);
   --card: oklch(0.19 0 0);
   --card-foreground: oklch(0.97 0 0);
   --popover: oklch(0.19 0 0);
   --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.68 0.18 260);                  /* lighter blue on dark */
+  --primary: oklch(0.68 0.18 260); /* lighter blue on dark */
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.22 0 0);
   --secondary-foreground: oklch(0.97 0 0);
@@ -159,7 +159,10 @@
     color: var(--color-foreground);
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     letter-spacing: -0.02em;
     font-weight: 700;
   }
@@ -176,7 +179,9 @@
 @utility nav-link {
   color: var(--color-muted-foreground);
   transition: color 150ms ease;
-  &:hover { color: var(--color-foreground); }
+  &:hover {
+    color: var(--color-foreground);
+  }
 }
 
 @utility nav-link-active {
@@ -189,41 +194,178 @@
   animation: fadeUp 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Global loader styles */
-.loader-root {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-background);
-  z-index: 9999;
+@layer utilities {
+  /* Global loader styles */
+  .loader-root {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-background);
+    z-index: 9999;
+  }
+  .loader-exit {
+    opacity: 0;
+    transition: opacity 420ms ease;
+    pointer-events: none;
+  }
+  .loader-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .loader-name {
+    font-size: 48px;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    color: var(--color-foreground);
+  }
+  .loader-cursor {
+    display: inline-block;
+    margin-left: 6px;
+    animation: blink 1s steps(2, start) infinite;
+  }
+  @keyframes blink {
+    to {
+      visibility: hidden;
+    }
+  }
+  .loader-spinner {
+    width: 48px;
+    height: 48px;
+  }
+  .loader-ring {
+    width: 48px;
+    height: 48px;
+  }
+  .loader-ring-bg {
+    stroke: color-mix(in oklab, var(--color-muted) 40%, transparent);
+  }
+  .loader-ring-fg {
+    stroke: var(--color-primary);
+    stroke-linecap: round;
+    stroke-dasharray: 125;
+    stroke-dashoffset: 90;
+    transform-origin: 50% 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* TipTap Editor Styles */
+  .ProseMirror {
+    outline: none;
+  }
+
+  .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Drag Handle Styles */
+  .drag-handle {
+    position: absolute;
+    left: -1.75rem;
+    top: 0.5rem;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+    color: #6c757d;
+  }
+
+  .ProseMirror:hover .drag-handle {
+    opacity: 1;
+  }
+
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+
+  /* Prose Image Styles - make sure images are always visible */
+  .prose img,
+  .prose-stone img,
+  .prose-invert img,
+  .ProseMirror img {
+    border-radius: 0.75rem;
+    margin: 1.5rem 0;
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Todo List Styles */
+  .ProseMirror ul[data-type="taskList"],
+  .prose ul[data-type="taskList"] {
+    list-style: none !important;
+    padding-left: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"],
+  .prose li[data-type="taskItem"] {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.75rem !important;
+    background: var(--secondary) !important;
+    border: 1px solid var(--border) !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"] label,
+  .prose li[data-type="taskItem"] label {
+    flex-shrink: 0 !important;
+    margin-top: 0.125rem !important;
+    user-select: none !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"] input[type="checkbox"],
+  .prose li[data-type="taskItem"] input[type="checkbox"] {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    accent-color: var(--primary) !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"] div,
+  .prose li[data-type="taskItem"] div {
+    flex-grow: 1 !important;
+  }
+
+  .ProseMirror li[data-type="taskItem"][data-checked="true"] div,
+  .prose li[data-type="taskItem"][data-checked="true"] div {
+    text-decoration: line-through !important;
+    color: var(--muted-foreground) !important;
+  }
 }
-.loader-exit { opacity: 0; transition: opacity 420ms ease; pointer-events: none; }
-.loader-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-.loader-name {
-  font-size: 48px;
-  letter-spacing: -0.02em;
-  font-weight: 800;
-  color: var(--color-foreground);
-}
-.loader-cursor {
-  display: inline-block;
-  margin-left: 6px;
-  animation: blink 1s steps(2, start) infinite;
-}
-@keyframes blink { to { visibility: hidden; } }
-.loader-spinner { width: 48px; height: 48px; }
-.loader-ring { width: 48px; height: 48px; }
-.loader-ring-bg { stroke: color-mix(in oklab, var(--color-muted) 40%, transparent); }
-.loader-ring-fg { stroke: var(--color-primary); stroke-linecap: round; stroke-dasharray: 125; stroke-dashoffset: 90; transform-origin: 50% 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }

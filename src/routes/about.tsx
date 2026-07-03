@@ -17,7 +17,7 @@ export default function AboutPage() {
       <div className="max-w-7xl mx-auto px-5 pt-5 pb-10 lg:pt-8 lg:pb-12">
         {/* "ABOUT ME" top for all screens */}
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-red-500">ABOUT ME</p>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mt-4">
           {/* Left Column - Main Content (desktop: lg:col-span-8) */}
           <div className="lg:col-span-8 order-2 lg:order-1">

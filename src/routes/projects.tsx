@@ -202,7 +202,7 @@ export default function ProjectsPage() {
           building well, I'd love to hear about it.
         </p>
         <Link
-          to="/contact"
+          to="/#send-message"
           className="mt-6 inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
         >
           Get in touch
@@ -252,14 +252,20 @@ function StatusBadge({ status }: { status: Status }) {
 
 function ProjectCard({
   project,
-  featured,
 }: {
   project: (typeof projects)[number];
   featured?: boolean;
 }) {
+  const linkUrl = project.github || project.demo;
+
   return (
     <article
-      className={`group flex flex-col rounded-xl border border-border bg-card p-6 transition-colors hover:border-foreground/20 hover:bg-secondary ${featured ? "" : ""}`}
+      className={`group flex flex-col rounded-xl border border-border bg-card p-6 transition-colors hover:border-foreground/20 hover:bg-secondary ${linkUrl ? "cursor-pointer" : ""}`}
+      onClick={() => {
+        if (linkUrl) {
+          window.open(linkUrl, "_blank", "noopener,noreferrer");
+        }
+      }}
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary">
@@ -288,6 +294,7 @@ function ProjectCard({
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-foreground hover:text-primary"
+            onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3.5 w-3.5" /> Live
           </a>
@@ -298,6 +305,7 @@ function ProjectCard({
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
           >
             <Github className="h-3.5 w-3.5" /> Code
           </a>
@@ -309,8 +317,17 @@ function ProjectCard({
 }
 
 function ProjectRow({ project }: { project: (typeof projects)[number] }) {
+  const linkUrl = project.github || project.demo;
+
   return (
-    <div className="flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={`flex flex-col gap-3 px-5 py-5 sm:flex-row sm:items-center sm:justify-between ${linkUrl ? "cursor-pointer hover:bg-secondary/50" : ""}`}
+      onClick={() => {
+        if (linkUrl) {
+          window.open(linkUrl, "_blank", "noopener,noreferrer");
+        }
+      }}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-base font-semibold tracking-tight">{project.title}</h3>
@@ -329,6 +346,7 @@ function ProjectRow({ project }: { project: (typeof projects)[number] }) {
             rel="noreferrer"
             aria-label="GitHub"
             className="text-muted-foreground hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
           >
             <Github className="h-4 w-4" />
           </a>
@@ -340,6 +358,7 @@ function ProjectRow({ project }: { project: (typeof projects)[number] }) {
             rel="noreferrer"
             aria-label="Live"
             className="text-muted-foreground hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-4 w-4" />
           </a>
@@ -348,5 +367,3 @@ function ProjectRow({ project }: { project: (typeof projects)[number] }) {
     </div>
   );
 }
-
-type Project = (typeof projects)[number];

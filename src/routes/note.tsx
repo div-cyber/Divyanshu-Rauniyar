@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Note, fetchNoteById } from "../lib/supabase";
 import { ArrowLeft } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
+import "katex/dist/katex.min.css";
 
 export default function NotePage() {
   const { id } = useParams<{ id: string }>();
@@ -80,11 +85,13 @@ export default function NotePage() {
         </h1>
 
         <div className="prose prose-stone dark:prose-invert max-w-none text-foreground">
-          {note.body.split("\n").map((paragraph, idx) => (
-            <p key={idx} className="mb-4 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
+          {note.body.startsWith("<") || note.body.includes("<") ? (
+            <div dangerouslySetInnerHTML={{ __html: note.body }} />
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+              {note.body}
+            </ReactMarkdown>
+          )}
         </div>
       </article>
     </div>
