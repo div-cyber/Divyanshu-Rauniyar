@@ -29,14 +29,18 @@ export function RootLayout() {
               const elementRect = element.getBoundingClientRect();
               const containerHeight = containerRect.height;
               const elementHeight = elementRect.height;
-              
+
               // Calculate scroll position to center the element in viewport
-              const scrollPosition = mainRef.current.scrollTop + (elementRect.top - containerRect.top) - (containerHeight / 2) + (elementHeight / 2);
-              
+              const scrollPosition =
+                mainRef.current.scrollTop +
+                (elementRect.top - containerRect.top) -
+                containerHeight / 2 +
+                elementHeight / 2;
+
               mainRef.current.scrollTo({
                 top: Math.max(0, scrollPosition),
                 left: 0,
-                behavior: "smooth"
+                behavior: "smooth",
               });
             }
           });

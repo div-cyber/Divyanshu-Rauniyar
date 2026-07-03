@@ -250,12 +250,7 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-function ProjectCard({
-  project,
-}: {
-  project: (typeof projects)[number];
-  featured?: boolean;
-}) {
+function ProjectCard({ project }: { project: (typeof projects)[number]; featured?: boolean }) {
   const linkUrl = project.github || project.demo;
 
   return (

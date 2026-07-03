@@ -147,7 +147,7 @@ export async function signOut() {
 
 export async function fetchContentSection(type: ContentSectionType) {
   if (contentSectionsCache) {
-    const section = contentSectionsCache.find(s => s.type === type);
+    const section = contentSectionsCache.find((s) => s.type === type);
     if (section) {
       return { data: section, error: null };
     }
@@ -186,7 +186,10 @@ export async function updateContentSection(
 export async function createContentSections(
   entries: Array<Omit<ContentSection, "id" | "created_at">>,
 ) {
-  const result = await supabase.from("content_sections").insert(entries).select("id, type, title, body");
+  const result = await supabase
+    .from("content_sections")
+    .insert(entries)
+    .select("id, type, title, body");
   invalidateContentSectionsCache();
   return result;
 }
@@ -213,7 +216,7 @@ export async function fetchBlogPosts() {
 
 export async function fetchBlogPostBySlug(slug: string) {
   if (blogPostsCache) {
-    const post = blogPostsCache.find(p => p.slug === slug);
+    const post = blogPostsCache.find((p) => p.slug === slug);
     if (post) {
       return { data: post, error: null };
     }
@@ -270,7 +273,7 @@ export async function fetchNotes() {
 
 export async function fetchNoteById(id: number) {
   if (notesCache) {
-    const note = notesCache.find(n => n.id === id);
+    const note = notesCache.find((n) => n.id === id);
     if (note) {
       return { data: note, error: null };
     }
@@ -284,7 +287,10 @@ export async function fetchNoteById(id: number) {
 }
 
 export async function createNote(note: Omit<Note, "id" | "created_at" | "updated_at">) {
-  const result = await supabase.from("notes").insert(note).select("id, title, body, created_at, updated_at");
+  const result = await supabase
+    .from("notes")
+    .insert(note)
+    .select("id, title, body, created_at, updated_at");
   invalidateNotesCache();
   return result;
 }
