@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
-import Placeholder from "@tiptap/extension-placeholder";
-import DragHandle from "@tiptap/extension-drag-handle";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
+import { StarterKit } from "@tiptap/starter-kit";
+import { Image } from "@tiptap/extension-image";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import { DragHandle } from "@tiptap/extension-drag-handle";
+import { TaskList } from "@tiptap/extension-task-list";
+import { TaskItem } from "@tiptap/extension-task-item";
+import { Table } from "@tiptap/extension-table";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableRow } from "@tiptap/extension-table-row";
 import {
   ArrowLeft,
   Save,
@@ -22,9 +24,13 @@ import {
   Quote,
   Code,
   CheckSquare,
+  Type,
+  Calculator,
+  Table as TableIcon,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import "katex/dist/katex.min.css";
@@ -60,6 +66,15 @@ export default function BlogEditorPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Font size states
+  const [currentFontSize, setCurrentFontSize] = useState("16");
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calculatorInputs, setCalculatorInputs] = useState({
+    baseSize: "16",
+    scaleFactor: "1.25",
+    levels: "6",
+  });
 
   const noteTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -148,13 +163,99 @@ export default function BlogEditorPage() {
     });
   }
 
+  // Font size functions
+  function applyFontSizeRichText(size: string) {
+    if (!editor) return;
+    
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    
+    if (from === to) {
+      // No text selected: insert span with placeholder
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(from, `<span style="font-size: ${size}px">text</span>`)
+        .run();
+    } else {
+      // Text selected: wrap it in span
+      editor
+        .chain()
+        .focus()
+        .insertContentAt({ from, to }, `<span style="font-size: ${size}px">${selectedText}</span>`)
+        .run();
+    }
+  }
+
+  function applyFontSizeMarkdown(textarea: HTMLTextAreaElement | null, value: string, setter: (value: string) => void, size: string) {
+    if (!textarea) {
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = value.slice(start, end) || "text";
+    const replacement = `<span style="font-size: ${size}px">${selected}</span>`;
+    const nextValue = value.slice(0, start) + replacement + value.slice(end);
+
+    setter(nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + replacement.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  // Calculate font size scale
+  function calculateFontSizes() {
+    const base = parseFloat(calculatorInputs.baseSize);
+    const scale = parseFloat(calculatorInputs.scaleFactor);
+    const levels = parseInt(calculatorInputs.levels);
+    
+    const sizes = [];
+    for (let i = 0; i < levels; i++) {
+      const size = base * Math.pow(scale, i);
+      sizes.push({
+        level: i,
+        size: Math.round(size * 100) / 100,
+      });
+    }
+    return sizes;
+  }
+
+  // Insert markdown table
+  function insertMarkdownTable() {
+    if (!noteTextareaRef.current) return;
+    
+    const tableMarkdown = `| Header 1 | Header 2 | Header 3 |
+| --- | --- | --- |
+| Row 1, Col 1 | Row 1, Col 2 | Row 1, Col 3 |
+| Row 2, Col 1 | Row 2, Col 2 | Row 2, Col 3 |`;
+    
+    const textarea = noteTextareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = blogMarkdown.slice(0, start) + tableMarkdown + blogMarkdown.slice(end);
+    
+    setBlogMarkdown(nextValue);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + tableMarkdown.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  // Insert rich text table
+  function insertRichTextTable() {
+    if (!editor) return;
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }
+
   const [editorState, setEditorState] = useState(0);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
-      Link.configure({ openOnClick: false }),
       Image.configure({ inline: false }),
       Placeholder.configure({ placeholder: "Write your blog post body..." }),
       DragHandle,
@@ -162,6 +263,23 @@ export default function BlogEditorPage() {
       TaskItem.configure({
         HTMLAttributes: { class: "flex items-center gap-2" },
         nested: true,
+      }),
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "border-collapse border border-border w-full",
+        },
+      }),
+      TableRow,
+      TableHeader.configure({
+        HTMLAttributes: {
+          class: "border border-border bg-secondary/50 px-2 py-1 font-semibold",
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          class: "border border-border px-2 py-1",
+        },
       }),
     ],
     content: blogState.body,
@@ -452,7 +570,7 @@ export default function BlogEditorPage() {
         {/* Toolbar */}
         <div className="mb-6 grid gap-2 rounded-2xl border border-border/60 bg-secondary/30 p-3">
           {blogEditorTab === "richtext" ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
               <button
                 type="button"
                 onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -474,6 +592,43 @@ export default function BlogEditorPage() {
               >
                 <UnderlineIcon className="h-4 w-4" />
               </button>
+              
+              {/* Font Size Controls */}
+              <div className="flex items-center gap-2 border border-border bg-background rounded-full px-3 py-2">
+                <Type className="h-4 w-4 text-muted-foreground" />
+                <select
+                  value={currentFontSize}
+                  onChange={(e) => {
+                    const size = e.target.value;
+                    setCurrentFontSize(size);
+                    if (size) {
+                      applyFontSizeRichText(size);
+                    }
+                  }}
+                  className="bg-transparent text-sm border-none outline-none text-foreground"
+                >
+                  <option value="">Font Size</option>
+                  <option value="12">12px</option>
+                  <option value="14">14px</option>
+                  <option value="16">16px</option>
+                  <option value="18">18px</option>
+                  <option value="20">20px</option>
+                  <option value="24">24px</option>
+                  <option value="28">28px</option>
+                  <option value="32">32px</option>
+                  <option value="36">36px</option>
+                  <option value="48">48px</option>
+                </select>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setShowCalculator(!showCalculator)}
+                className="rounded-full border border-border bg-background px-3 py-2 text-sm font-medium transition hover:border-foreground/30"
+              >
+                <Calculator className="h-4 w-4" />
+              </button>
+              
               <button
                 type="button"
                 onClick={() => editor?.chain().focus().toggleBulletList().run()}
@@ -509,6 +664,13 @@ export default function BlogEditorPage() {
               >
                 <CheckSquare className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => insertRichTextTable()}
+                className="rounded-full border border-border bg-background px-3 py-2 text-sm font-medium transition hover:border-foreground/30"
+              >
+                <TableIcon className="h-4 w-4" />
+              </button>
               <input
                 type="file"
                 accept="image/*"
@@ -538,7 +700,7 @@ export default function BlogEditorPage() {
               </label>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
               <button
                 type="button"
                 onClick={() =>
@@ -557,6 +719,43 @@ export default function BlogEditorPage() {
               >
                 <Italic className="h-4 w-4" />
               </button>
+              
+              {/* Font Size Controls for Markdown */}
+              <div className="flex items-center gap-2 border border-border bg-background rounded-full px-3 py-2">
+                <Type className="h-4 w-4 text-muted-foreground" />
+                <select
+                  value={currentFontSize}
+                  onChange={(e) => {
+                    const size = e.target.value;
+                    setCurrentFontSize(size);
+                    if (size) {
+                      applyFontSizeMarkdown(noteTextareaRef.current, blogMarkdown, setBlogMarkdown, size);
+                    }
+                  }}
+                  className="bg-transparent text-sm border-none outline-none text-foreground"
+                >
+                  <option value="">Font Size</option>
+                  <option value="12">12px</option>
+                  <option value="14">14px</option>
+                  <option value="16">16px</option>
+                  <option value="18">18px</option>
+                  <option value="20">20px</option>
+                  <option value="24">24px</option>
+                  <option value="28">28px</option>
+                  <option value="32">32px</option>
+                  <option value="36">36px</option>
+                  <option value="48">48px</option>
+                </select>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setShowCalculator(!showCalculator)}
+                className="rounded-full border border-border bg-background px-3 py-2 text-sm font-medium transition hover:border-foreground/30"
+              >
+                <Calculator className="h-4 w-4" />
+              </button>
+              
               <button
                 type="button"
                 onClick={() =>
@@ -600,6 +799,13 @@ export default function BlogEditorPage() {
               >
                 <LinkIcon className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => insertMarkdownTable()}
+                className="rounded-full border border-border bg-background px-3 py-2 text-sm font-medium transition hover:border-foreground/30"
+              >
+                <TableIcon className="h-4 w-4" />
+              </button>
               <input
                 type="file"
                 accept="image/*"
@@ -627,6 +833,76 @@ export default function BlogEditorPage() {
           )}
         </div>
 
+        {/* Font Size Calculator */}
+        {showCalculator && (
+          <div className="mb-6 rounded-2xl border border-border bg-background p-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-[0.18em] mb-4 flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Font Size Scale Calculator
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Base Size (px)</label>
+                <input
+                  type="number"
+                  value={calculatorInputs.baseSize}
+                  onChange={(e) => setCalculatorInputs({ ...calculatorInputs, baseSize: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Scale Factor</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={calculatorInputs.scaleFactor}
+                  onChange={(e) => setCalculatorInputs({ ...calculatorInputs, scaleFactor: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Number of Levels</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={calculatorInputs.levels}
+                  onChange={(e) => setCalculatorInputs({ ...calculatorInputs, levels: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-foreground/60 focus:ring-2 focus:ring-ring/30"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {calculateFontSizes().map(({ level, size }) => (
+                <div key={level} className="rounded-xl border border-border bg-secondary/30 p-3 text-center">
+                  <div className="text-xs text-muted-foreground mb-1">Level {level + 1}</div>
+                  <div style={{ fontSize: `${size}px` }} className="font-semibold text-foreground">
+                    {size}px
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (blogEditorTab === "richtext") {
+                        applyFontSizeRichText(String(size));
+                      } else {
+                        applyFontSizeMarkdown(noteTextareaRef.current, blogMarkdown, setBlogMarkdown, String(size));
+                      }
+                      setCurrentFontSize(String(size));
+                    }}
+                    className="mt-2 text-xs bg-foreground text-background px-2 py-1 rounded-full hover:opacity-90 transition"
+                  >
+                    Use Size
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Preview Section */}
         <div className="mb-8 rounded-2xl border border-border bg-background p-6">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-[0.18em] mb-4">
@@ -640,7 +916,7 @@ export default function BlogEditorPage() {
                 return <div dangerouslySetInnerHTML={{ __html: html }} key={editorState} />;
               })()
             ) : (
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
                 {blogMarkdown || "Start writing to preview!"}
               </ReactMarkdown>
             )}

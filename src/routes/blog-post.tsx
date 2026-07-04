@@ -4,6 +4,7 @@ import { BlogPost, fetchBlogPostBySlug } from "../lib/supabase";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
 import "katex/dist/katex.min.css";
@@ -105,15 +106,13 @@ export default function BlogPostPage() {
 
         {/* Content */}
         <div className="prose prose-stone dark:prose-invert prose-lg max-w-none text-foreground">
-          {post.body.startsWith("<") || post.body.includes("<") ? (
-            // If it's HTML content (from rich text editor)
-            <div dangerouslySetInnerHTML={{ __html: post.body }} />
-          ) : (
-            // If it's markdown content
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
-              {post.body}
-            </ReactMarkdown>
-          )}
+          {/* Render both markdown and HTML using ReactMarkdown with rehypeRaw */}
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeRaw, rehypeKatex]}
+          >
+            {post.body}
+          </ReactMarkdown>
         </div>
       </article>
     </div>
